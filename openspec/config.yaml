@@ -1,20 +1,41 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Project: Rolling Acres Property Dashboard
+  Domain: Mobile home park property management. Integrates RentManager (RM) as the source of
+  truth for units, tenants, leases, and pets, and PetScreening (PS) for pet questionnaires
+  and screening profiles.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Tech stack:
+  - Runtime: Cloudflare Workers (edge, no Node.js APIs)
+  - Framework: Hono (lightweight router for Workers)
+  - Language: TypeScript throughout
+  - Frontend: React 18 + Vite, served as static assets from the same Worker via ASSETS binding
+  - Tables: TanStack Table v8
+  - Styling: Tailwind CSS + custom "Verdant Estate" design theme (CSS variables: --color-bark,
+    --color-earth, --color-dust, --color-ivory, --color-straw, --color-amber, --color-field,
+    --color-harvest-*, --color-pasture-*; fonts: --font-display, --font-ui)
+  - Storage: Cloudflare D1 (SQLite) for analytics snapshots; Cloudflare Cache API for
+    short-lived API response caching
+  - Badge variants in use: secondary, harvest, pasture (map to Verdant Estate palette)
+
+  Architecture rules:
+  - All URLs live in src/config.ts — never hardcoded elsewhere
+  - Secrets (RM credentials, PS credentials, CF_ACCESS_AUD) are Worker env bindings only —
+    never in source or config files
+  - One RM auth session per Worker isolate lifetime (module-level token cache in rm/client.ts)
+  - Cache keys: ps-profiles, rm-data, pet-fee-audit — bustCache() must bust all three
+  - D1 binding name: ps_analytics (lowercase underscore)
+  - No raw SQL ever reaches D1 from user input — always validated and parameterized server-side
+  - Authentication: Cloudflare Access (CF-Access-Jwt-Assertion header); dev bypass via
+    DEV_USER_EMAIL / DEV_USER_NAME env vars
+
+  Key source locations:
+  - src/worker/index.ts — Hono app, all API routes, scheduled ETL handler
+  - src/lib/rm/ — RentManager API client and data helpers
+  - src/lib/petscreening/ — PetScreening session auth and profile fetcher
+  - src/lib/analytics/ — ETL, dimensions, query builder
+  - src/lib/cache.ts — CF Cache API wrapper
+  - src/web/src/features/ — React feature pages (audits/, petscreening/, analytics/)
+  - src/web/src/components/ — Shared UI components (FilterPanel, Badge, Table, Skeleton, etc.)
+  - migrations/ — D1 SQL migration files

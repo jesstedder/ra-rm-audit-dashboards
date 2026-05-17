@@ -1,10 +1,6 @@
-# Capability: Pet Registration Check
+## MODIFIED Requirements
 
-Requirements for the pet registration cross-reference endpoint and dashboard page.
-
----
-
-## Requirement: GET /api/pets/registration-check endpoint
+### Requirement: GET /api/pets/registration-check endpoint
 
 The worker SHALL expose `GET /api/pets/registration-check` (behind auth middleware) that fetches (or returns cached) PS profiles and RM data, joins them by unit number, and returns an array of `RegistrationCheckRow` objects — one per RM unit that has either an active tenant or a PS profile.
 
@@ -32,6 +28,8 @@ The `status` field SHALL be computed server-side according to the following rule
 
 Fuzzy name match: normalize both names to lowercase alphanumeric; match succeeds if normalized strings are equal, or one contains the other.
 
+The `hasGap` field SHALL be removed from the response shape.
+
 #### Scenario: Gap detected
 - **WHEN** a unit has PS pet profiles but no RM pet record
 - **THEN** `status` is `'gap'`
@@ -58,28 +56,28 @@ Fuzzy name match: normalize both names to lowercase alphanumeric; match succeeds
 
 ---
 
-## Requirement: Pet Registration Check UI page
+### Requirement: Pet Registration Check UI page
 
 The dashboard SHALL include a "Pet Registration Check" page accessible from the sidebar under Audits. It SHALL display a filterable table of `RegistrationCheckRow` data.
 
 Columns:
 - **Unit** — unit name, linked to RM unit URL
 - **Tenant** — tenant name, linked to RM tenant URL (or "—" if none)
-- **PS Pets** — for each PS pet: name, species, paw score badge (1–5), link icon to PS profile; when `status` is `mismatched`, each PS pet name that has no fuzzy match in RM is visually highlighted (amber text + ⚠ prefix)
-- **RM Pets** — pet names from RM (or "—" if none); when `status` is `mismatched`, unmatched RM pet names are highlighted
+- **PS Pets** — for each PS pet: name, species, paw score badge (1–5), link icon to PS profile; when `status` is `mismatched`, each PS pet name that has no fuzzy match in RM is visually highlighted (e.g. amber text or warning icon)
+- **RM Pets** — comma-separated pet names from RM (or "—" if none); when `status` is `mismatched`, unmatched RM pet names are highlighted
 - **Status** — chip with one of five states:
   - `no_record` — muted chip: "No Record"
   - `rm_only` — harvest chip: "RM Only"
   - `gap` — harvest chip: "⚠ Gap"
-  - `mismatched` — harvest chip: "⚠ Mismatch"
+  - `mismatched` — amber chip: "⚠ Mismatch"
   - `matched` — pasture chip: "✓ Matched"
 
 The filter panel SHALL include:
-- A **Status** multi-select control (checkboxes) for each of the five status values; defaults to all selected; selecting a subset shows only rows with that status
+- A **Status** multi-select control (checkboxes or chip toggles) for each of the five status values; defaults to all selected; selecting a subset shows only rows with that status
 - A **unit number** text input
 - A **tenant / pet name** text search input
 
-A **status legend** SHALL be displayed above the filter panel explaining each status and its implied action:
+A **status legend** SHALL be displayed on the page (inline above the filter panel or as a collapsible section) explaining each status and its implied action:
 
 | Status | Meaning | Action |
 |--------|---------|--------|
@@ -107,7 +105,7 @@ A **status legend** SHALL be displayed above the filter panel explaining each st
 
 #### Scenario: Mismatch highlighted in row
 - **WHEN** a row has `status === 'mismatched'` and the PS pet "Buddy" does not fuzzy-match any RM pet name
-- **THEN** "Buddy" appears highlighted (amber + ⚠) in the PS Pets column
+- **THEN** "Buddy" appears highlighted (amber or warning styling) in the PS Pets column
 
 #### Scenario: Unit number filter
 - **WHEN** the user types in the unit number field
@@ -124,17 +122,3 @@ A **status legend** SHALL be displayed above the filter panel explaining each st
 #### Scenario: Empty state after filter
 - **WHEN** the active filters produce no matching rows
 - **THEN** a message is shown: "No units match the selected filters"
-
----
-
-## Requirement: Paw score badge
-
-The paw score SHALL be displayed as a numeric badge (1–5) styled using the Verdant Estate theme. Score 1–2 uses harvest (amber/orange) styling; score 3–5 uses pasture (green) styling.
-
-#### Scenario: Low paw score
-- **WHEN** `pawScore` is 1 or 2
-- **THEN** a harvest-variant badge is shown with the numeric value
-
-#### Scenario: High paw score
-- **WHEN** `pawScore` is 3, 4, or 5
-- **THEN** a pasture-variant badge is shown with the numeric value

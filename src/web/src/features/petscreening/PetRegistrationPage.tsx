@@ -9,6 +9,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { usePetRegistration, type RegistrationCheckRow } from './usePetRegistration.ts';
+import type { RegistrationStatus } from '@worker/index.js';
 import {
   Table,
   TableHeader,
@@ -21,7 +22,47 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Skeleton } from '../../components/ui/skeleton.tsx';
 import { FilterPanel } from '../../components/FilterPanel.tsx';
 
-type GapFilter = 'all' | 'gaps';
+const ALL_STATUSES: RegistrationStatus[] = ['no_record', 'rm_only', 'gap', 'mismatched', 'matched'];
+
+const STATUS_META: Record<RegistrationStatus, { label: string; chip: React.ReactNode; meaning: string; action: string }> = {
+  no_record: {
+    label: 'No Record',
+    chip: <Badge variant="secondary">No Record</Badge>,
+    meaning: 'Active tenant with no PetScreening profile or RM pets found',
+    action: 'Ask tenant to submit PetScreening questionnaire',
+  },
+  rm_only: {
+    label: 'RM Only',
+    chip: <Badge variant="harvest">RM Only</Badge>,
+    meaning: 'Pets registered in RentManager but no PetScreening profile',
+    action: 'Ask tenant to complete PetScreening for their pet(s)',
+  },
+  gap: {
+    label: 'Gap',
+    chip: <Badge variant="harvest">⚠ Gap</Badge>,
+    meaning: 'Pets registered in PetScreening but not in RentManager',
+    action: 'Add pet(s) to RentManager',
+  },
+  mismatched: {
+    label: 'Mismatch',
+    chip: <Badge variant="harvest">⚠ Mismatch</Badge>,
+    meaning: 'Both systems have pets but names don\'t match — may be different animals',
+    action: 'Verify with tenant',
+  },
+  matched: {
+    label: 'Matched',
+    chip: <Badge variant="pasture">✓ Matched</Badge>,
+    meaning: 'Pet records agree in both systems',
+    action: 'No action needed',
+  },
+};
+
+function fuzzyMatch(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const na = norm(a);
+  const nb = norm(b);
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
 
 function PawScore({ score }: { score: number }) {
   const variant = score <= 2 ? 'harvest' : 'pasture';
@@ -46,87 +87,127 @@ function PsLink({ href, children }: { href: string; children: React.ReactNode })
   );
 }
 
+function StatusLegend() {
+  return (
+    <div
+      style={{
+        backgroundColor: 'var(--color-ivory)',
+        border: '1px solid var(--color-straw)',
+        borderRadius: '10px',
+        padding: '14px 18px',
+        marginBottom: '20px',
+        fontFamily: 'var(--font-ui)',
+      }}
+    >
+      <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-dust)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>
+        Status Guide
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: '6px 16px', alignItems: 'start' }}>
+        {ALL_STATUSES.map(s => {
+          const m = STATUS_META[s];
+          return (
+            <React.Fragment key={s}>
+              <div style={{ paddingTop: '1px' }}>{m.chip}</div>
+              <span style={{ fontSize: '12px', color: 'var(--color-earth)' }}>{m.meaning}</span>
+              <span style={{ fontSize: '12px', color: 'var(--color-dust)', fontStyle: 'italic' }}>{m.action}</span>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const columnHelper = createColumnHelper<RegistrationCheckRow>();
 
-const columns = [
-  columnHelper.accessor('unitName', {
-    header: 'Unit',
-    cell: info => (
-      <a
-        href={info.row.original.rmUnitLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ fontWeight: 600, color: 'var(--color-bark)', textDecoration: 'none' }}
-      >
-        {info.getValue()} ↗
-      </a>
-    ),
-  }),
-  columnHelper.accessor('tenantName', {
-    header: 'Tenant',
-    cell: info => {
-      const name = info.getValue();
-      const link = info.row.original.rmTenantLink;
-      if (!name) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
-      return (
+function buildColumns(selectedStatuses: Set<RegistrationStatus>) {
+  return [
+    columnHelper.accessor('unitName', {
+      header: 'Unit',
+      cell: info => (
         <a
-          href={link ?? '#'}
+          href={info.row.original.rmUnitLink}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: 'var(--color-earth)', textDecoration: 'none' }}
+          style={{ fontWeight: 600, color: 'var(--color-bark)', textDecoration: 'none' }}
         >
-          {name} ↗
+          {info.getValue()} ↗
         </a>
-      );
-    },
-  }),
-  columnHelper.accessor('psPets', {
-    header: 'PetScreening',
-    enableSorting: false,
-    cell: info => {
-      const pets = info.getValue();
-      if (pets.length === 0) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {pets.map(p => (
-            <PsLink key={p.id} href={p.psLink}>
-              <span style={{ color: 'var(--color-bark)', fontWeight: 500 }}>{p.name}</span>
-              <span style={{ color: 'var(--color-earth)', fontSize: '11px' }}> ({p.species})</span>
-              {p.pawScore > 0 && <PawScore score={p.pawScore} />}
-            </PsLink>
-          ))}
-        </div>
-      );
-    },
-  }),
-  columnHelper.accessor('rmPets', {
-    header: 'RM Pets',
-    enableSorting: false,
-    cell: info => {
-      const pets = info.getValue();
-      if (pets.length === 0) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
-      return (
-        <span style={{ color: 'var(--color-earth)' }}>
-          {pets.map(p => p.name).join(', ')}
-        </span>
-      );
-    },
-  }),
-  columnHelper.accessor('hasGap', {
-    header: 'Status',
-    enableSorting: false,
-    cell: info => {
-      const row = info.row.original;
-      if (row.psPets.length === 0) {
-        return <Badge variant="secondary">No PS record</Badge>;
-      }
-      if (info.getValue()) {
-        return <Badge variant="harvest">⚠ Gap</Badge>;
-      }
-      return <Badge variant="pasture">✓ Matched</Badge>;
-    },
-  }),
-];
+      ),
+    }),
+    columnHelper.accessor('tenantName', {
+      header: 'Tenant',
+      cell: info => {
+        const name = info.getValue();
+        const link = info.row.original.rmTenantLink;
+        if (!name) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
+        return (
+          <a
+            href={link ?? '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--color-earth)', textDecoration: 'none' }}
+          >
+            {name} ↗
+          </a>
+        );
+      },
+    }),
+    columnHelper.accessor('psPets', {
+      header: 'PetScreening',
+      enableSorting: false,
+      cell: info => {
+        const pets = info.getValue();
+        const row = info.row.original;
+        if (pets.length === 0) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {pets.map(p => {
+              const isMismatch = row.status === 'mismatched' &&
+                !row.rmPets.some(rp => fuzzyMatch(p.name, rp.name));
+              return (
+                <PsLink key={p.id} href={p.psLink}>
+                  <span style={{ color: isMismatch ? 'var(--color-amber)' : 'var(--color-bark)', fontWeight: 500 }}>
+                    {isMismatch && '⚠ '}{p.name}
+                  </span>
+                  <span style={{ color: 'var(--color-earth)', fontSize: '11px' }}> ({p.species})</span>
+                  {p.pawScore > 0 && <PawScore score={p.pawScore} />}
+                </PsLink>
+              );
+            })}
+          </div>
+        );
+      },
+    }),
+    columnHelper.accessor('rmPets', {
+      header: 'RM Pets',
+      enableSorting: false,
+      cell: info => {
+        const pets = info.getValue();
+        const row = info.row.original;
+        if (pets.length === 0) return <span style={{ color: 'var(--color-dust)' }}>—</span>;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {pets.map(p => {
+              const isMismatch = row.status === 'mismatched' &&
+                !row.psPets.some(pp => fuzzyMatch(p.name, pp.name));
+              return (
+                <span key={p.petId} style={{ color: isMismatch ? 'var(--color-amber)' : 'var(--color-earth)', fontSize: '13px' }}>
+                  {isMismatch && '⚠ '}{p.name}
+                </span>
+              );
+            })}
+          </div>
+        );
+      },
+    }),
+    columnHelper.accessor('status', {
+      header: 'Status',
+      enableSorting: false,
+      cell: info => STATUS_META[info.getValue()].chip,
+    }),
+  ];
+}
 
 function LoadingSkeleton() {
   return (
@@ -161,10 +242,12 @@ function matchesSearch(row: RegistrationCheckRow, search: string): boolean {
   return false;
 }
 
+const ALL_STATUSES_SET = new Set(ALL_STATUSES);
+
 export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => void) => void }) {
   const { data, cachedAt, loading, error, reload } = usePetRegistration();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [gapFilter, setGapFilter] = useState<GapFilter>('all');
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<RegistrationStatus>>(new Set(ALL_STATUSES));
   const [unitFilter, setUnitFilter] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -173,12 +256,26 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
     onReloadRef?.(reload);
   }, [onReloadRef, reload]);
 
+  const toggleStatus = (s: RegistrationStatus) => {
+    setSelectedStatuses(prev => {
+      const next = new Set(prev);
+      if (next.has(s)) {
+        next.delete(s);
+      } else {
+        next.add(s);
+      }
+      return next;
+    });
+  };
+
   const filtered = useMemo(() => (data ?? []).filter(row => {
-    if (gapFilter === 'gaps' && !row.hasGap) return false;
+    if (!selectedStatuses.has(row.status)) return false;
     if (unitFilter && !row.unitName.toLowerCase().includes(unitFilter.toLowerCase())) return false;
     if (searchFilter && !matchesSearch(row, searchFilter)) return false;
     return true;
-  }), [data, gapFilter, unitFilter, searchFilter]);
+  }), [data, selectedStatuses, unitFilter, searchFilter]);
+
+  const columns = useMemo(() => buildColumns(selectedStatuses), [selectedStatuses]);
 
   const table = useReactTable({
     data: filtered,
@@ -190,19 +287,29 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const hasActiveFilters = gapFilter !== 'all' || unitFilter !== '' || searchFilter !== '';
+  const statusFilterActive = selectedStatuses.size < ALL_STATUSES.length;
+  const hasActiveFilters = statusFilterActive || unitFilter !== '' || searchFilter !== '';
 
   const activeChips = [
-    ...(gapFilter !== 'all' ? [{ label: 'Gaps only', onRemove: () => setGapFilter('all') }] : []),
+    ...(statusFilterActive
+      ? ALL_STATUSES.filter(s => selectedStatuses.has(s)).map(s => ({
+          label: STATUS_META[s].label,
+          onRemove: () => toggleStatus(s),
+        }))
+      : []),
     ...(unitFilter ? [{ label: `Unit: ${unitFilter}`, onRemove: () => setUnitFilter('') }] : []),
     ...(searchFilter ? [{ label: searchFilter.length > 20 ? searchFilter.slice(0, 20) + '…' : searchFilter, onRemove: () => setSearchFilter('') }] : []),
   ];
 
-  const onClearAll = () => { setGapFilter('all'); setUnitFilter(''); setSearchFilter(''); };
+  const onClearAll = () => {
+    setSelectedStatuses(new Set(ALL_STATUSES));
+    setUnitFilter('');
+    setSearchFilter('');
+  };
 
   const filteredCount = filtered.length;
   const totalCount = data?.length ?? 0;
-  const gapCount = data?.filter(r => r.hasGap).length ?? 0;
+  const gapCount = data?.filter(r => r.status === 'gap').length ?? 0;
 
   return (
     <div className="p-10">
@@ -248,22 +355,10 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
         </div>
       )}
 
-      {!loading && !error && data?.length === 0 && (
-        <div
-          className="rounded-lg p-8 text-center text-sm"
-          style={{
-            backgroundColor: 'var(--color-pasture-bg)',
-            border: '1px solid #a8d8b0',
-            color: 'var(--color-pasture-text)',
-            fontFamily: 'var(--font-ui)',
-          }}
-        >
-          All PetScreening registrations have matching RM records.
-        </div>
-      )}
-
-      {!loading && !error && data && data.length > 0 && (
+      {!loading && !error && data && (
         <>
+          <StatusLegend />
+
           <FilterPanel
             open={filterOpen}
             onToggle={() => setFilterOpen(o => !o)}
@@ -276,31 +371,34 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
                 : `${totalCount} units`
             }
           >
-            {/* Show segmented control */}
+            {/* Status filter */}
             <div className="flex flex-col gap-1">
               <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-dust)', fontFamily: 'var(--font-ui)' }}>
-                Show
+                Status
               </label>
-              <div className="inline-flex rounded-md overflow-hidden" style={{ border: '1px solid var(--color-straw)' }}>
-                {(['all', 'gaps'] as GapFilter[]).map((v, i) => {
-                  const isActive = gapFilter === v;
-                  return (
-                    <button
-                      key={v}
-                      onClick={() => setGapFilter(v)}
-                      className="px-3 py-1.5 text-sm transition-colors"
-                      style={{
-                        backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'var(--color-ivory)',
-                        color: isActive ? 'var(--color-sidebar-brand)' : 'var(--color-earth)',
-                        fontFamily: 'var(--font-ui)',
-                        fontWeight: isActive ? 500 : 400,
-                        borderRight: i === 0 ? '1px solid var(--color-straw)' : undefined,
-                      }}
-                    >
-                      {v === 'all' ? 'All units' : 'Gaps only'}
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {ALL_STATUSES.map(s => (
+                  <label
+                    key={s}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      color: 'var(--color-earth)',
+                      fontFamily: 'var(--font-ui)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedStatuses.has(s)}
+                      onChange={() => toggleStatus(s)}
+                      style={{ accentColor: 'var(--color-amber)', width: '14px', height: '14px' }}
+                    />
+                    {STATUS_META[s].label}
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -353,54 +451,68 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
             </div>
           </FilterPanel>
 
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: 'var(--color-ivory)',
-              border: '1px solid var(--color-straw)',
-              boxShadow: '0 1px 4px rgba(44,33,24,0.06), 0 4px 16px rgba(44,33,24,0.04)',
-            }}
-          >
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map(hg => (
-                  <TableRow
-                    key={hg.id}
-                    style={{ borderBottomColor: 'var(--color-straw)', backgroundColor: '#f7f2e8' }}
-                    onMouseEnter={() => {}}
-                    onMouseLeave={() => {}}
-                  >
-                    {hg.headers.map(header => (
-                      <TableHead
-                        key={header.id}
-                        className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === 'asc' && (
-                          <span style={{ color: 'var(--color-amber)', marginLeft: '4px' }}>↑</span>
-                        )}
-                        {header.column.getIsSorted() === 'desc' && (
-                          <span style={{ color: 'var(--color-amber)', marginLeft: '4px' }}>↓</span>
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map(row => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {filtered.length === 0 ? (
+            <div
+              className="rounded-lg p-8 text-center text-sm"
+              style={{
+                backgroundColor: 'var(--color-ivory)',
+                border: '1px solid var(--color-straw)',
+                color: 'var(--color-dust)',
+                fontFamily: 'var(--font-ui)',
+              }}
+            >
+              No units match the selected filters
+            </div>
+          ) : (
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{
+                backgroundColor: 'var(--color-ivory)',
+                border: '1px solid var(--color-straw)',
+                boxShadow: '0 1px 4px rgba(44,33,24,0.06), 0 4px 16px rgba(44,33,24,0.04)',
+              }}
+            >
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map(hg => (
+                    <TableRow
+                      key={hg.id}
+                      style={{ borderBottomColor: 'var(--color-straw)', backgroundColor: '#f7f2e8' }}
+                      onMouseEnter={() => {}}
+                      onMouseLeave={() => {}}
+                    >
+                      {hg.headers.map(header => (
+                        <TableHead
+                          key={header.id}
+                          className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.column.getIsSorted() === 'asc' && (
+                            <span style={{ color: 'var(--color-amber)', marginLeft: '4px' }}>↑</span>
+                          )}
+                          {header.column.getIsSorted() === 'desc' && (
+                            <span style={{ color: 'var(--color-amber)', marginLeft: '4px' }}>↓</span>
+                          )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows.map(row => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map(cell => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </>
       )}
     </div>

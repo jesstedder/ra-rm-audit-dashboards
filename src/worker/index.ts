@@ -28,6 +28,8 @@ interface Env {
   ps_analytics: D1Database;
 }
 
+export type RegistrationStatus = 'no_record' | 'rm_only' | 'gap' | 'mismatched' | 'matched';
+
 export interface RegistrationCheckRow {
   unitId: number;
   unitName: string;
@@ -37,7 +39,25 @@ export interface RegistrationCheckRow {
   rmTenantLink: string | null;
   rmPets: Array<{ petId: number; name: string; breed?: string }>;
   psPets: Array<{ id: number; name: string; species: string; pawScore: number; publicToken: string; psLink: string }>;
-  hasGap: boolean;
+  status: RegistrationStatus;
+}
+
+function fuzzyNameMatch(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const na = norm(a);
+  const nb = norm(b);
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function computeStatus(
+  psPets: RegistrationCheckRow['psPets'],
+  rmPets: RegistrationCheckRow['rmPets'],
+): RegistrationStatus {
+  if (psPets.length > 0 && rmPets.length === 0) return 'gap';
+  if (psPets.length === 0 && rmPets.length > 0) return 'rm_only';
+  if (psPets.length === 0 && rmPets.length === 0) return 'no_record';
+  const allMatch = psPets.every(pp => rmPets.some(rp => fuzzyNameMatch(pp.name, rp.name)));
+  return allMatch ? 'matched' : 'mismatched';
 }
 
 const RM_WEB = config.rm.webUrl;
@@ -195,6 +215,15 @@ app.get('/api/pets/registration-check', async (c) => {
       const rmPets = tenantId != null ? (petsByTenant.get(tenantId) ?? []) : [];
       const psPets = psByUnit.get(unit.Name) ?? [];
 
+      const mappedRmPets = rmPets.map(p => ({ petId: p.PetID, name: p.Name ?? '', breed: p.Breed }));
+      const mappedPsPets = psPets.map(p => ({
+        id: p.id,
+        name: p.name,
+        species: p.species,
+        pawScore: p.pawScore,
+        publicToken: p.publicToken,
+        psLink: `${PS_WEB}/p/${p.publicToken}`,
+      }));
       rows.push({
         unitId,
         unitName: unit.Name,
@@ -202,16 +231,9 @@ app.get('/api/pets/registration-check', async (c) => {
         tenantId,
         tenantName: tenant ? `${tenant.FirstName} ${tenant.LastName}` : null,
         rmTenantLink: tenantId != null ? `${RM_WEB}/#/tenants/${tenantId}/details` : null,
-        rmPets: rmPets.map(p => ({ petId: p.PetID, name: p.Name ?? '', breed: p.Breed })),
-        psPets: psPets.map(p => ({
-          id: p.id,
-          name: p.name,
-          species: p.species,
-          pawScore: p.pawScore,
-          publicToken: p.publicToken,
-          psLink: `${PS_WEB}/p/${p.publicToken}`,
-        })),
-        hasGap: psPets.length > 0 && rmPets.length === 0,
+        rmPets: mappedRmPets,
+        psPets: mappedPsPets,
+        status: computeStatus(mappedPsPets, mappedRmPets),
       });
     }
 

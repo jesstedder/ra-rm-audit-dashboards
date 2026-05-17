@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 export interface PetFeeAuditResult {
   tenantId: number;
   tenantName: string;
-  unitId: number | undefined;
+  unitName: string | undefined;
   chargeTypeName: string;
   amount: number;
+  status: string;
+  moveOutDate: string | undefined;
 }
 
 interface UsePetFeeAuditResult {

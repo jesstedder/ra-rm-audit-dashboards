@@ -27,9 +27,30 @@ const columns = [
     header: 'Tenant',
     cell: (info) => <span className="font-medium">{info.getValue()}</span>,
   }),
-  columnHelper.accessor('unitId', {
-    header: 'Unit ID',
+  columnHelper.accessor('unitName', {
+    header: 'Unit',
     cell: (info) => info.getValue() ?? <span className="text-gray-400">—</span>,
+    enableSorting: false,
+  }),
+  columnHelper.accessor('status', {
+    header: 'Status',
+    cell: (info) => {
+      const status = info.getValue();
+      return (
+        <Badge variant={status === 'Current' ? 'default' : 'secondary'}>
+          {status}
+        </Badge>
+      );
+    },
+    enableSorting: false,
+  }),
+  columnHelper.accessor('moveOutDate', {
+    header: 'Move-Out Date',
+    cell: (info) => {
+      const date = info.getValue();
+      if (!date) return <span className="text-gray-400">—</span>;
+      return new Date(date).toLocaleDateString();
+    },
     enableSorting: false,
   }),
   columnHelper.accessor('chargeTypeName', {

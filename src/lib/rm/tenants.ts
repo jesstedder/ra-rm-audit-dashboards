@@ -4,7 +4,8 @@ export interface Tenant {
   TenantID: number;
   FirstName: string;
   LastName: string;
-  UnitID?: number;
+  Status: string;
+  PostingEndDate?: string;
 }
 
 export async function getAllTenants(client: RMClient): Promise<Tenant[]> {

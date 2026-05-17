@@ -18,6 +18,8 @@ export interface RMCredentials {
 
 export interface RMClient {
   getAll<T>(path: string, queryString?: string): Promise<T[]>;
+  post<T>(path: string, body: unknown): Promise<T>;
+  postMultipart<T>(path: string, formData: FormData): Promise<T>;
 }
 
 async function fetchToken(credentials: RMCredentials): Promise<string> {
@@ -104,5 +106,57 @@ export function createClient(credentials: RMCredentials): RMClient {
     return results;
   }
 
-  return { getAll };
+  async function post<T>(path: string, body: unknown, isRetry = false): Promise<T> {
+    const token = await getToken();
+    const url = `${credentials.baseUrl}${path}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-RM12Api-ApiToken': token,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 401 && !isRetry) {
+      tokenCache.delete(cacheKey);
+      return post<T>(path, body, true);
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new RMApiError(response.status, text, path);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  async function postMultipart<T>(path: string, formData: FormData, isRetry = false): Promise<T> {
+    const token = await getToken();
+    const url = `${credentials.baseUrl}${path}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'X-RM12Api-ApiToken': token,
+        // Do NOT set Content-Type — the browser/fetch sets it with boundary for multipart
+      },
+      body: formData,
+    });
+
+    if (response.status === 401 && !isRetry) {
+      tokenCache.delete(cacheKey);
+      return postMultipart<T>(path, formData, true);
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new RMApiError(response.status, text, path);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  return { getAll, post, postMultipart };
 }

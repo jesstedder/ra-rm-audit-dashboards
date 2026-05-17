@@ -1,6 +1,7 @@
 export const config = {
   rm: {
     webUrl: 'https://rollinga.rmx.rentmanager.com',
+    propertyId: 1,
   },
   ps: {
     baseUrl: 'https://rolling-acres.petscreening.com',

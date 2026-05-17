@@ -2,19 +2,25 @@ import { useState, useRef, useCallback } from 'react';
 import { PetFeeAuditPage } from './features/audits/PetFeeAuditPage.tsx';
 import { PetRegistrationPage } from './features/petscreening/PetRegistrationPage.tsx';
 import { AnalyticsPage } from './features/analytics/AnalyticsPage.tsx';
+import { ViolationDashboardPage } from './features/violations/ViolationDashboardPage.tsx';
+import { ViolationEntryPage } from './features/violations/ViolationEntryPage.tsx';
+import { ViolationNotifyPage } from './features/violations/ViolationNotifyPage.tsx';
 import { useCurrentUser } from './hooks/useCurrentUser.ts';
 import { RefreshButton } from './components/RefreshButton.tsx';
 
-type Page = 'pet-fee-audit' | 'pet-registration-check' | 'analytics';
+type Page = 'pet-fee-audit' | 'pet-registration-check' | 'analytics' | 'violations-dashboard' | 'violations-new' | 'violations-notify';
 
 const navItems: { id: Page; label: string; section: string }[] = [
   { id: 'pet-fee-audit', label: 'Pet Fee Audit', section: 'Audits' },
   { id: 'pet-registration-check', label: 'Pet Registration Check', section: 'Audits' },
+  { id: 'violations-dashboard', label: 'Dashboard', section: 'Violations' },
+  { id: 'violations-new', label: 'New Report', section: 'Violations' },
   { id: 'analytics', label: 'Analytics', section: 'Analytics' },
 ];
 
 export default function App() {
   const [page, setPage] = useState<Page>('pet-fee-audit');
+  const [notifyTenantId, setNotifyTenantId] = useState<number | null>(null);
   const { user } = useCurrentUser();
   const reloadRef = useRef<(() => void) | null>(null);
   const handleReloadRef = useCallback((fn: () => void) => { reloadRef.current = fn; }, []);
@@ -48,7 +54,7 @@ export default function App() {
 
         {/* Nav */}
         <nav className="flex-1 py-5 px-3 space-y-0.5">
-          {(['Audits', 'Analytics'] as const).map(section => {
+          {(['Audits', 'Violations', 'Analytics'] as const).map(section => {
             const sectionItems = navItems.filter(i => i.section === section);
             return (
               <div key={section} className={section !== 'Audits' ? 'mt-4' : ''}>
@@ -115,6 +121,13 @@ export default function App() {
           <PetRegistrationPage onReloadRef={handleReloadRef} />
         )}
         {page === 'analytics' && <AnalyticsPage />}
+        {page === 'violations-dashboard' && (
+          <ViolationDashboardPage onNotify={(tenantId) => { setNotifyTenantId(tenantId); setPage('violations-notify'); }} />
+        )}
+        {page === 'violations-new' && <ViolationEntryPage />}
+        {page === 'violations-notify' && (
+          <ViolationNotifyPage tenantId={notifyTenantId} />
+        )}
       </main>
     </div>
   );

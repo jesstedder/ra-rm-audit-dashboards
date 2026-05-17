@@ -7,11 +7,21 @@ import { verifyAccessToken, getDevUser, type UserInfo } from '../lib/auth/cf-acc
 import { fetchAllData, fetchPsProfiles } from '../lib/fetchAllData.js';
 import { getCached, getCachedAt, setCached, bustCache } from '../lib/cache.js';
 import { buildUnitNameMap } from '../lib/rm/units.js';
-import { buildTenantUnitMap } from '../lib/rm/leases.js';
+import { buildTenantUnitMap, getAllLeases } from '../lib/rm/leases.js';
 import type { PsProfile } from '../lib/petscreening/pets.js';
 import { runAnalyticsEtl } from '../lib/analytics/etl.js';
 import { STATIC_DIMENSIONS, MEASURES, highlightDimension } from '../lib/analytics/dimensions.js';
 import { buildAnalyticsQuery, validateSpec, type QuerySpec } from '../lib/analytics/query-builder.js';
+import {
+  getViolations,
+  getViolationCodes,
+  createViolations,
+  uploadViolationImage,
+  markStagesCommunicated,
+  type ViolationCode,
+  type Violation,
+  type StageNotifyItem,
+} from '../lib/rm/violations.js';
 
 interface Env {
   RM_BASEURL: string;
@@ -248,6 +258,135 @@ app.get('/api/pets/registration-check', async (c) => {
   }
 });
 
+app.get('/api/tenants', async (c) => {
+  try {
+    type RmBundle = { tenants: Array<{ TenantID: number; FirstName: string; LastName: string; Status: string }> };
+    const cached = await getCached<RmBundle>('rm-data');
+    if (cached) {
+      const current = cached.tenants.filter(t => t.Status === 'Current');
+      return c.json({ tenants: current });
+    }
+    const data = await fetchAllData(c.env);
+    const current = data.rmTenants.filter(t => t.Status === 'Current');
+    return c.json({ tenants: current });
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    throw err;
+  }
+});
+
+app.get('/api/violation-codes', async (c) => {
+  const { RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID } = c.env;
+  try {
+    const cached = await getCached<ViolationCode[]>('rm-violation-codes');
+    if (cached) return c.json({ codes: cached });
+
+    const client = createClient({ baseUrl: RM_BASEURL, username: RM_USERNAME, password: RM_PASSWORD, locationId: parseInt(RM_LOCATIONID, 10) });
+    const codes = await getViolationCodes(client);
+    await setCached('rm-violation-codes', codes, 3600);
+    return c.json({ codes });
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    throw err;
+  }
+});
+
+app.get('/api/violations', async (c) => {
+  const { RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID } = c.env;
+  try {
+    const cached = await getCached<Violation[]>('rm-violations');
+    if (cached) return c.json({ violations: cached, cachedAt: await getCachedAt('rm-violations') });
+
+    const client = createClient({ baseUrl: RM_BASEURL, username: RM_USERNAME, password: RM_PASSWORD, locationId: parseInt(RM_LOCATIONID, 10) });
+    const violations = await getViolations(client, config.rm.propertyId);
+    await setCached('rm-violations', violations, config.cache.ttlSeconds);
+    return c.json({ violations, cachedAt: await getCachedAt('rm-violations') });
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    throw err;
+  }
+});
+
+app.post('/api/violations', async (c) => {
+  const { RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID } = c.env;
+  try {
+    const body = await c.req.json<Array<{
+      tenantId: number;
+      violationCodeId: number;
+      violationDate: string;
+      resolveAction?: string;
+      description?: string;
+      imageId?: number;
+    }>>();
+
+    if (!Array.isArray(body) || body.length === 0) {
+      return c.json({ error: 'Request body must be a non-empty array of violations' }, 400);
+    }
+
+    const client = createClient({ baseUrl: RM_BASEURL, username: RM_USERNAME, password: RM_PASSWORD, locationId: parseInt(RM_LOCATIONID, 10) });
+
+    // Resolve tenantId → unitId; reuse rm-data cache if warm, else fetch leases directly
+    type RmBundle = { leases: Awaited<ReturnType<typeof getAllLeases>> };
+    const cachedRm = await getCached<RmBundle>('rm-data');
+    const leases = cachedRm?.leases ?? await getAllLeases(client);
+    const tenantUnitMap = buildTenantUnitMap(leases);
+
+    const items = body.map(v => {
+      const unitId = tenantUnitMap.get(v.tenantId);
+      if (!unitId) throw new Error(`No active unit found for tenant ${v.tenantId}`);
+      return { tenantId: v.tenantId, unitId, violationCodeId: v.violationCodeId, violationDate: v.violationDate, resolveAction: v.resolveAction, description: v.description, imageId: v.imageId };
+    });
+
+    const created = await createViolations(client, config.rm.propertyId, items);
+    await bustCache('rm-violations');
+    return c.json({ violations: created });
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    if (err instanceof Error) return c.json({ error: err.message }, 400);
+    throw err;
+  }
+});
+
+app.post('/api/violations/notify', async (c) => {
+  const { RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID } = c.env;
+  try {
+    const body = await c.req.json<StageNotifyItem[]>();
+    if (!Array.isArray(body) || body.length === 0) {
+      return c.json({ error: 'Request body must be a non-empty array' }, 400);
+    }
+
+    const client = createClient({ baseUrl: RM_BASEURL, username: RM_USERNAME, password: RM_PASSWORD, locationId: parseInt(RM_LOCATIONID, 10) });
+    const results = await markStagesCommunicated(client, body);
+    await bustCache('rm-violations');
+    const allOk = results.every(r => r.success);
+    return c.json({ results, allOk }, allOk ? 200 : 207);
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    throw err;
+  }
+});
+
+app.post('/api/violations/:id/image', async (c) => {
+  const { RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID } = c.env;
+  const violationId = parseInt(c.req.param('id'), 10);
+  if (isNaN(violationId)) return c.json({ error: 'Invalid violation ID' }, 400);
+
+  try {
+    const formData = await c.req.formData();
+    const imageEntry = formData.get('image');
+    if (!(imageEntry instanceof File)) {
+      return c.json({ error: 'Request must include an "image" file field' }, 400);
+    }
+
+    const client = createClient({ baseUrl: RM_BASEURL, username: RM_USERNAME, password: RM_PASSWORD, locationId: parseInt(RM_LOCATIONID, 10) });
+    const result = await uploadViolationImage(client, violationId, imageEntry);
+    return c.json({ imageId: result.ImageID });
+  } catch (err) {
+    if (err instanceof RMApiError) return c.json({ error: err.message, upstream: err.status }, 502);
+    throw err;
+  }
+});
+
 app.post('/api/analytics/sync', async (c) => {
   await runAnalyticsEtl(c.env, c.env.ps_analytics);
   const row = await c.env.ps_analytics
@@ -257,7 +396,7 @@ app.post('/api/analytics/sync', async (c) => {
 });
 
 app.post('/api/cache/refresh', async (c) => {
-  await bustCache('ps-profiles', 'rm-data', 'pet-fee-audit');
+  await bustCache('ps-profiles', 'rm-data', 'pet-fee-audit', 'rm-violations', 'rm-violation-codes');
   return c.json({ ok: true });
 });
 

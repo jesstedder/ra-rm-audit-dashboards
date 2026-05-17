@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html class="fixed  js flexbox flexboxlegacy csstransforms csstransforms3d no-overflowscrolling no-mobile-device custom-scroll" style=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   
+
+   <title>Rent Manager Web API Documentation</title>
+   <meta name="keywords" content="RentManger API Documentation">
+   <meta name="description" content="Rent Manager Web API Documentation">
+   <meta name="author" content="lcs.com">
+
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+   <link href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/css" rel="stylesheet" type="text/css">
+
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/bootstrap.css">
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/font-awesome.css">
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery-ui-1.10.4.custom.css">
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/bootstrap-multiselect.css">
+
+   <!-- Theme -->
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/theme.css">
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/default.css">
+   <link rel="stylesheet" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/theme-custom.css">
+
+
+   
+   
+   <script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/modernizr.js"></script>
+
+   
+   <script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.js"></script>
+   
+
+   
+   <link type="text/css" href="./violations-image-save-api-call-Rent Manager Web API Documentation_files/HelpPage.css" rel="stylesheet">
+
+
+
+</head>
+<body>
+<section class="body">
+
+   <!-- start: header -->
+   <header class="header">
+      <div class="logo-container">
+         <a href="https://rollinga.api.rentmanager.com/Help" class="logo">
+            <img src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/rmlogo.png" height="35" alt="Rent Manager Web API Documentation">
+         </a>
+         <div class="visible-xs toggle-sidebar-left" data-toggle-class="sidebar-left-opened" data-target="html" data-fire-event="sidebar-left-opened">
+            <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
+         </div>
+      </div>
+   </header>
+   <!-- end: header -->
+
+   <div class="inner-wrapper">
+      <!-- start: sidebar -->
+      <aside id="sidebar-left" class="sidebar-left">
+
+         <div class="sidebar-header">
+            <div class="sidebar-title">
+               <a href="https://rollinga.api.rentmanager.com/Help/Resource/Violations">
+                  <i class="fa fa-chevron-left" aria-hidden="true"></i>
+               </a>
+               <span>Violations</span>
+            </div>
+            <div class="sidebar-toggle hidden-xs" data-toggle-class="sidebar-left-collapsed" data-target="html" data-fire-event="sidebar-left-toggle">
+               <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
+            </div>
+         </div>
+
+         <div class="nano has-scrollbar">
+            <div class="nano-content" tabindex="0" style="right: -15px;">
+               <nav id="menu" class="nav-main" role="navigation">
+                  <ul class="nav nav-main">
+
+                              <li>
+                                 <a style="padding-right: 10px" href="https://rollinga.api.rentmanager.com/Help/Method/Violations/Image/Retrieve/Instance">
+                                    <i class="fa fa-bolt" aria-hidden="true"></i>
+                                    <span>Retrieve Instance</span>
+                                 </a>
+                              </li>
+                              <li>
+                                 <a style="padding-right: 10px" href="https://rollinga.api.rentmanager.com/Help/Method/Violations/Image/Save">
+                                    <i class="fa fa-bolt" aria-hidden="true"></i>
+                                    <span>Save</span>
+                                 </a>
+                              </li>
+
+                  </ul>
+               </nav>
+
+            </div>
+
+         <div class="nano-pane" style="display: none; opacity: 1; visibility: visible;"><div class="nano-slider" style="height: 1383px; transform: translate(0px, 0px);"></div></div></div>
+
+      </aside>
+      <!-- end: sidebar -->
+      <!-- start: page -->
+      
+
+<section role="main" class="content-body">
+   <header class="page-header">
+      <h2>Rent Manager Web API Reference</h2>
+
+      <div class="right-wrapper pull-right">
+         
+
+         <span>&nbsp;&nbsp;&nbsp;</span>
+
+      </div>
+   </header>
+   <div id="body">
+      <section class="content-wrapper main-content clear-fix">
+         
+
+
+
+
+<div class="toggle" data-plugin-toggle="">
+   <h1 class="">Violations Image Save</h1>
+   <div>
+            
+      <p>Saves image File for the Violation with the provided ViolationID</p>
+   </div>
+   <div>
+      <h2>Request Information</h2>
+      <section class="toggle active">
+         <label><i class="fa fa-plus"></i><i class="fa fa-minus"></i>Url</label>
+         <div class="toggle-content" style="display: block;">
+            <div class="sample-content">
+               <pre class="wrapped">POST Violations/{id}/Image?saveOptions={saveOptions}&amp;fields={fields}&amp;embeds={embeds}</pre>
+            </div>
+         </div>
+      </section>
+            <section class="toggle active">
+               <label><i class="fa fa-plus"></i><i class="fa fa-minus"></i>Parameters</label>
+               <div class="toggle-content" style="display: block;">
+                  <table class="help-page-table">
+   <thead>
+      <tr><th>Name</th><th>Type</th><th>Additional information</th></tr>
+   </thead>
+   <tbody>
+            <tr>
+               <td class="parameter-name"><b>id</b></td>
+                  <td class="parameter-type"><b>Integer</b></td>
+               <td class="parameter-source">
+                        <p>Define this parameter in the request <b>URI</b>.</p>
+               </td>
+            </tr>
+            <tr>
+               <td class="parameter-name"><b>item</b></td>
+                  <td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ImageModel/Violations-Image-Save">ImageModel</a></b></td>
+               <td class="parameter-source">
+                        <p>Define this parameter in the request <b>body</b>.</p>
+               </td>
+            </tr>
+            <tr>
+               <td class="parameter-name"><b>saveOptions</b></td>
+                  <td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ImageSaveOptions/Violations-Image-Save">ImageSaveOptions List</a></b></td>
+               <td class="parameter-source">
+                        <p>Define this parameter in the request <b>URI</b>.</p>
+               </td>
+            </tr>
+            <tr>
+               <td class="parameter-name"><b>fields</b></td>
+                  <td class="parameter-type"><b>String</b></td>
+               <td class="parameter-source">
+                        <p>Define this parameter in the request <b>URI</b>.</p>
+               </td>
+            </tr>
+            <tr>
+               <td class="parameter-name"><b>embeds</b></td>
+                  <td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ImageEmbedOptions/Violations-Image-Save">ImageEmbedOptions List</a></b></td>
+               <td class="parameter-source">
+                        <p>Define this parameter in the request <b>URI</b>.</p>
+               </td>
+            </tr>
+         </tbody>
+</table>
+               </div>
+            </section>
+            <section class="toggle active">
+               <label><i class="fa fa-plus"></i><i class="fa fa-minus"></i>Request body formats</label>
+               <div class="toggle-content" style="display: block;">
+                  
+<div>
+        <h4 class="sample-header">application/json, text/json, multipart/form-data</h4>
+        <div class="sample-content">
+            <span><b>Sample:</b></span>
+<pre class="wrapped">{
+  "ImageID": 1,
+  "ImageTypeID": 2,
+  "FileID": 3,
+  "Rotation": 4,
+  "Scale": 5.0,
+  "PositionY": 6,
+  "PositionX": 7,
+  "CreateDate": "2026-05-17T09:59:13.8276355-04:00",
+  "CreateUserID": 9,
+  "SortOrder": 10,
+  "Caption": "sample string 11",
+  "ParentID": 12,
+  "Token": "sample+string+13",
+  "UpdateDate": "2026-05-17T09:59:13.8276355-04:00",
+  "UpdateUserID": 15,
+  "ImageType": {},
+  "MetaTag": "sample string 18"
+}
+</pre>
+        </div>
+</div>
+               </div>
+            </section>
+
+         <h2>Response Information</h2>
+            <section class="toggle active">
+               <label><i class="fa fa-plus"></i><i class="fa fa-minus"></i>Model</label>
+               <div class="toggle-content" style="display: block;">
+                  
+<h3>ImageModel</h3>
+<div>
+
+      <h4>Properties</h4>
+
+
+<table class="help-page-table">
+   <thead>
+      <tr><th>Name</th><th>Type</th><th>Optimized <a href="https://rollinga.api.rentmanager.com/Help/Model/ImageFilterFields/Violations-Image-Save">Filters</a></th><th>Attributes</th></tr>
+   </thead>
+   <tbody>
+      <tr class="">
+         <td class="parameter-name">
+            <b>ImageID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+,                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">In</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#PrimaryKey">Primary Key</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>ImageTypeID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+,                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">In</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>FileID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>File</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ImageFileModel/Violations-Image-Save">ImageFileModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Rotation</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#ReadOnly">Read Only</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Scale</b>
+                        </td><td class="parameter-type"><b>Decimal</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#ReadOnly">Read Only</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>PositionY</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#ReadOnly">Read Only</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>PositionX</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#ReadOnly">Read Only</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>CreateDate</b>
+                        </td><td class="parameter-type"><b>DateTime</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>CreateUserID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>SortOrder</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Caption</b>
+                        </td><td class="parameter-type"><b>String</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>ParentID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+,                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">In</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="deprecated">
+         <td class="parameter-name">
+            <b>Token</b>
+               <b>(DEPRECATED)<br> As of 3/22/2019</b>
+                  <b>replaced by File.DownloadURL</b>
+                        </td><td class="parameter-type"><b>String</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/Attributes#CalculatedField">Calculated Field</a>
+                     </b>
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>UpdateDate</b>
+                        </td><td class="parameter-type"><b>DateTime</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>UpdateUserID</b>
+                        </td><td class="parameter-type"><b>Integer</b></td>
+            <td class="parameter-filter">
+                     <b>
+                        <a href="https://rollinga.api.rentmanager.com/Help/Overview?nid=Home/Overview/QueryStringParameters#Filters">EqualTo</a>
+                     </b>
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>ImageType</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ImageTypeModel/Violations-Image-Save">ImageTypeModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Property</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/PropertyModel/Violations-Image-Save">PropertyModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Unit</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/UnitModel/Violations-Image-Save">UnitModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>UnitType</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/UnitTypeModel/Violations-Image-Save">UnitTypeModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Contact</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ContactModel/Violations-Image-Save">ContactModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Pet</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/PetModel/Violations-Image-Save">PetModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Asset</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/AssetModel/Violations-Image-Save">AssetModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>Violation</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/ViolationModel/Violations-Image-Save">ViolationModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>User</b>
+                        </td><td class="parameter-type"><b><a href="https://rollinga.api.rentmanager.com/Help/Model/UserModel/Violations-Image-Save">UserModel</a></b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+      <tr class="">
+         <td class="parameter-name">
+            <b>MetaTag</b>
+                        </td><td class="parameter-type"><b>String</b></td>
+            <td class="parameter-filter">
+            </td>
+            <td class="parameter-filter">
+      </td></tr>
+   </tbody>
+</table>
+</div>
+               </div>
+            </section>
+         <section class="toggle active">
+            <label><i class="fa fa-plus"></i><i class="fa fa-minus"></i>Response body formats</label>
+            <div class="toggle-content" style="display: block;">
+               
+<div>
+        <h4 class="sample-header">application/json, text/json, multipart/form-data</h4>
+        <div class="sample-content">
+            <span><b>Sample:</b></span>
+<pre class="wrapped">{
+  "ImageID": 1,
+  "ImageTypeID": 2,
+  "FileID": 3,
+  "Rotation": 4,
+  "Scale": 5.0,
+  "PositionY": 6,
+  "PositionX": 7,
+  "CreateDate": "2026-05-17T09:59:13.8432697-04:00",
+  "CreateUserID": 9,
+  "SortOrder": 10,
+  "Caption": "sample string 11",
+  "ParentID": 12,
+  "Token": "NnQG6SqOrGJ6iyCSAu8XE_V_rMLlppErAvLHJB0Fna3y15WuVDmpOklPLRPMNURn5IMxgt5zUTViDUxlKiBqyDQyANz9HD4U7GINmlULV4DAUysANSYJNzT4o1DUxrWF0mOmT4I3nhE-i27js9VYo2vQBBryM8xjtGihaRO9hJA%3d",
+  "UpdateDate": "2026-05-17T09:59:13.8432697-04:00",
+  "UpdateUserID": 15,
+  "ImageType": {
+    "MaxImageSize": "FiveHundred"
+  },
+  "MetaTag": "sample string 18"
+}
+</pre>
+        </div>
+</div>
+            </div>
+         </section>
+
+   </div>
+</div>
+
+
+      </section>
+   </div>
+</section>
+
+
+      <!-- end: page -->
+
+   </div>
+
+</section>
+
+<!-- Scripts -->
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.browser.mobile.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/bootstrap.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/nanoscroller.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.placeholder.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.autosize.js"></script>
+
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery-ui-1.10.4.custom.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.ui.touch-punch.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/jquery.appear.js"></script>
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/bootstrap-multiselect.js"></script>
+
+<!-- Theme Settings -->
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/theme.js"></script>
+
+<!-- Theme Extensions -->
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/theme.custom.js"></script>
+
+<!-- Theme Initialization -->
+<script src="./violations-image-save-api-call-Rent Manager Web API Documentation_files/theme.init.js"></script>
+
+
+
+<protonpass-root-f25e data-protonpass-role="root" data-protonpass-theme="os"><template shadowrootmode="closed"></template></protonpass-root-f25e></body></html>

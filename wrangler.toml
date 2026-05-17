@@ -27,9 +27,9 @@ database_id = "92cde68e-b8fd-41e0-9f21-3e052ec7703a"
 crons = ["0 8 * * *"]
 
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 
 [observability.traces]
-enabled = false
+enabled = true

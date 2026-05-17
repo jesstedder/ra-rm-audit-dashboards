@@ -1,25 +1,63 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --border: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
-    --sidebar-bg: 224 71.4% 4.1%;
-    --sidebar-fg: 210 20% 98%;
-    --sidebar-muted: 215 20.2% 65.1%;
-    --sidebar-active: 210 40% 96.1%;
-  }
+@theme {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-ui: "Jost", system-ui, sans-serif;
+
+  /* Sidebar — deep hedgerow green */
+  --color-sidebar-bg:        #1b2b1d;
+  --color-sidebar-hover:     #263c29;
+  --color-sidebar-active:    #2f4e35;
+  --color-sidebar-border:    #243228;
+  --color-sidebar-text:      #c4d8bc;
+  --color-sidebar-muted:     #6d9173;
+  --color-sidebar-brand:     #e6f0e2;
+  --color-amber:             #c8943f;
+
+  /* Main content — warm field light */
+  --color-field:             #f1ece2;
+  --color-ivory:             #fdfaf4;
+  --color-straw:             #dfd5c1;
+  --color-bark:              #2c2118;
+  --color-earth:             #6b5c4a;
+  --color-dust:              #9b8874;
+
+  /* Status colors */
+  --color-pasture-bg:        #d5edda;
+  --color-pasture-text:      #1b4f30;
+  --color-harvest-bg:        #ecddd0;
+  --color-harvest-text:      #6b3a1e;
+  --color-pond-bg:           #d2dfe9;
+  --color-pond-text:         #1e3d52;
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--color-straw);
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--color-field);
+  color: var(--color-bark);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle field texture on page background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

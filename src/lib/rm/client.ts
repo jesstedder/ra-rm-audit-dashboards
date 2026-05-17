@@ -40,14 +40,24 @@ async function fetchToken(credentials: RMCredentials): Promise<string> {
   return (await response.json()) as string;
 }
 
+// Module-level token cache — shared across requests within the same isolate.
+// Stores a pending Promise so concurrent calls share one in-flight auth request.
+const tokenCache = new Map<string, Promise<string>>();
+
 export function createClient(credentials: RMCredentials): RMClient {
-  let cachedToken: string | null = null;
+  const cacheKey = `${credentials.username}@${credentials.baseUrl}:${credentials.locationId}`;
+
+  function fetchAndCacheToken(): Promise<string> {
+    const p = fetchToken(credentials).catch(err => {
+      tokenCache.delete(cacheKey);
+      throw err;
+    });
+    tokenCache.set(cacheKey, p);
+    return p;
+  }
 
   async function getToken(): Promise<string> {
-    if (!cachedToken) {
-      cachedToken = await fetchToken(credentials);
-    }
-    return cachedToken;
+    return tokenCache.get(cacheKey) ?? fetchAndCacheToken();
   }
 
   async function getAll<T>(path: string, queryString?: string, isRetry = false): Promise<T[]> {
@@ -70,7 +80,7 @@ export function createClient(credentials: RMCredentials): RMClient {
       });
 
       if (response.status === 401 && !isRetry) {
-        cachedToken = null;
+        tokenCache.delete(cacheKey);
         return getAll<T>(path, queryString, true);
       }
 

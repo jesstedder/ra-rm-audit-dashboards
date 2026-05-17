@@ -7,6 +7,7 @@ import { getAllUnits, buildUnitNameMap } from '../units.js';
 export interface PetFeeAuditResult {
   tenantId: number;
   tenantName: string;
+  unitId: number | undefined;
   unitName: string | undefined;
   chargeTypeName: string;
   amount: number;
@@ -53,6 +54,7 @@ export async function findTenantsWithPetFeeButNoPet(
     return {
       tenantId: charge.TenantID,
       tenantName: tenant ? tenantDisplayName(tenant) : `Tenant #${charge.TenantID}`,
+      unitId: charge.UnitID,
       unitName: charge.UnitID != null ? unitNameMap.get(charge.UnitID) : undefined,
       chargeTypeName: chargeType?.Name ?? `ChargeType #${charge.ChargeTypeID}`,
       amount: charge.Amount,

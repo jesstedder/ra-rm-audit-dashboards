@@ -30,7 +30,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b transition-colors hover:bg-gray-50 data-[state=selected]:bg-gray-100', className)}
+      className={cn('border-b transition-colors data-[state=selected]:bg-[var(--color-straw)]', className)}
+      style={{ borderColor: 'var(--color-straw)' }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = '#f5eedf'; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
       {...props}
     />
   ),
@@ -41,7 +44,15 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={cn('h-10 px-4 text-left align-middle font-medium text-gray-500 [&:has([role=checkbox])]:pr-0', className)}
+      className={cn('h-10 px-4 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0', className)}
+      style={{
+        color: 'var(--color-earth)',
+        fontFamily: 'var(--font-ui)',
+        fontWeight: 500,
+        fontSize: '0.75rem',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+      }}
       {...props}
     />
   ),
@@ -53,6 +64,7 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
     <td
       ref={ref}
       className={cn('p-4 align-middle [&:has([role=checkbox])]:pr-0', className)}
+      style={{ color: 'var(--color-bark)', fontFamily: 'var(--font-ui)' }}
       {...props}
     />
   ),

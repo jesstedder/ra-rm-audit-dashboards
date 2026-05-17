@@ -2,6 +2,7 @@ name = "rm-api"
 main = "src/worker/index.ts"
 compatibility_date = "2024-12-05"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = false
 
 [assets]
 directory = "./dist"
@@ -9,3 +10,26 @@ binding = "ASSETS"
 
 # RM credentials — set via .dev.vars locally, Cloudflare dashboard secrets in prod
 # Required vars: RM_BASEURL, RM_USERNAME, RM_PASSWORD, RM_LOCATIONID
+# Auth: CF_ACCESS_AUD — set via `wrangler secret put CF_ACCESS_AUD` (from CF Zero Trust dashboard)
+# PetScreening credentials — set via .dev.vars locally, Cloudflare dashboard secrets in prod
+# Required vars: PETSCREENING_USERNAME, PETSCREENING_PASSWORD, PETSCREENER_PMID
+
+[[routes]]
+pattern = "ra.megroudebush.com"
+custom_domain = true
+
+[[d1_databases]]
+binding = "ps_analytics"
+database_name = "ps-analytics"
+database_id = "92cde68e-b8fd-41e0-9f21-3e052ec7703a"
+
+[triggers] 
+crons = ["0 8 * * *"]
+
+[observability.logs]
+enabled = false
+invocation_logs = true
+
+
+[observability.traces]
+enabled = false

@@ -11,6 +11,6 @@ export const config = {
   },
   cache: {
     baseUrl: 'https://cache.internal',
-    ttlSeconds: 300,
+    ttlSeconds: 600,
   },
 } as const;

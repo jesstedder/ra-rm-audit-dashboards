@@ -45,6 +45,9 @@ async function fetchToken(credentials: RMCredentials): Promise<string> {
 // Module-level token cache — shared across requests within the same isolate.
 // Stores a pending Promise so concurrent calls share one in-flight auth request.
 const tokenCache = new Map<string, Promise<string>>();
+// Tracks which token promises have had at least one successful response.
+// A 401 on an unproven token means the request is bad, not the token — don't re-auth.
+const provenTokens = new Set<Promise<string>>();
 
 export function createClient(credentials: RMCredentials): RMClient {
   const cacheKey = `${credentials.username}@${credentials.baseUrl}:${credentials.locationId}`;
@@ -58,12 +61,13 @@ export function createClient(credentials: RMCredentials): RMClient {
     return p;
   }
 
-  async function getToken(): Promise<string> {
+  function getTokenPromise(): Promise<string> {
     return tokenCache.get(cacheKey) ?? fetchAndCacheToken();
   }
 
   async function getAll<T>(path: string, queryString?: string, isRetry = false): Promise<T[]> {
-    const token = await getToken();
+    const tokenPromise = getTokenPromise();
+    const token = await tokenPromise;
     const results: T[] = [];
     let pageNumber = 1;
     let totalResults: number | null = null;
@@ -82,8 +86,13 @@ export function createClient(credentials: RMCredentials): RMClient {
       });
 
       if (response.status === 401 && !isRetry) {
-        tokenCache.delete(cacheKey);
-        return getAll<T>(path, queryString, true);
+        if (provenTokens.has(tokenPromise)) {
+          provenTokens.delete(tokenPromise);
+          tokenCache.delete(cacheKey);
+          return getAll<T>(path, queryString, true);
+        }
+        const body = await response.text().catch(() => '');
+        throw new RMApiError(401, body, path);
       }
 
       if (response.status === 204) return results;
@@ -92,6 +101,8 @@ export function createClient(credentials: RMCredentials): RMClient {
         const body = await response.text().catch(() => '');
         throw new RMApiError(response.status, body, path);
       }
+
+      provenTokens.add(tokenPromise);
 
       if (totalResults === null) {
         const header = response.headers.get('X-Total-Results');
@@ -107,7 +118,8 @@ export function createClient(credentials: RMCredentials): RMClient {
   }
 
   async function post<T>(path: string, body: unknown, isRetry = false): Promise<T> {
-    const token = await getToken();
+    const tokenPromise = getTokenPromise();
+    const token = await tokenPromise;
     const url = `${credentials.baseUrl}${path}`;
     const response = await fetch(url, {
       method: 'POST',
@@ -120,8 +132,13 @@ export function createClient(credentials: RMCredentials): RMClient {
     });
 
     if (response.status === 401 && !isRetry) {
-      tokenCache.delete(cacheKey);
-      return post<T>(path, body, true);
+      if (provenTokens.has(tokenPromise)) {
+        provenTokens.delete(tokenPromise);
+        tokenCache.delete(cacheKey);
+        return post<T>(path, body, true);
+      }
+      const text = await response.text().catch(() => '');
+      throw new RMApiError(401, text, path);
     }
 
     if (!response.ok) {
@@ -129,25 +146,32 @@ export function createClient(credentials: RMCredentials): RMClient {
       throw new RMApiError(response.status, text, path);
     }
 
+    provenTokens.add(tokenPromise);
     return response.json() as Promise<T>;
   }
 
   async function postMultipart<T>(path: string, formData: FormData, isRetry = false): Promise<T> {
-    const token = await getToken();
+    const tokenPromise = getTokenPromise();
+    const token = await tokenPromise;
     const url = `${credentials.baseUrl}${path}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'X-RM12Api-ApiToken': token,
-        // Do NOT set Content-Type — the browser/fetch sets it with boundary for multipart
+        // Do NOT set Content-Type — fetch sets it with boundary for multipart
       },
       body: formData,
     });
 
     if (response.status === 401 && !isRetry) {
-      tokenCache.delete(cacheKey);
-      return postMultipart<T>(path, formData, true);
+      if (provenTokens.has(tokenPromise)) {
+        provenTokens.delete(tokenPromise);
+        tokenCache.delete(cacheKey);
+        return postMultipart<T>(path, formData, true);
+      }
+      const text = await response.text().catch(() => '');
+      throw new RMApiError(401, text, path);
     }
 
     if (!response.ok) {
@@ -155,6 +179,7 @@ export function createClient(credentials: RMCredentials): RMClient {
       throw new RMApiError(response.status, text, path);
     }
 
+    provenTokens.add(tokenPromise);
     return response.json() as Promise<T>;
   }
 

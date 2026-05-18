@@ -14,7 +14,7 @@ const navItems: { id: Page; label: string; section: string }[] = [
   { id: 'pet-fee-audit', label: 'Pet Fee Audit', section: 'Audits' },
   { id: 'pet-registration-check', label: 'Pet Registration Check', section: 'Audits' },
   { id: 'violations-dashboard', label: 'Dashboard', section: 'Violations' },
-  { id: 'violations-new', label: 'New Report', section: 'Violations' },
+  { id: 'violations-new', label: 'Quick Entry', section: 'Violations' },
   { id: 'analytics', label: 'Analytics', section: 'Analytics' },
 ];
 

@@ -1,7 +1,7 @@
 ## 1. Spikes & Configuration
 
 - [x] 1.1 Add `rm.propertyId` as a numeric constant to `src/config.ts` (get the value from RM)
-- [ ] 1.2 Spike: verify `POST /Violations` with a `ViolationCodeID` auto-creates Stage 1 — confirmed when using `embeds=ViolationStages` that stages must be explicit (and require ViolationStageAction which can't be embedded at Violations level). Approach: POST without any embeds/stages, matching RM docs sample; verify at first real form submission.
+- [x] 1.2 Spike: verify `POST /Violations` with a `ViolationCodeID` auto-creates Stage 1 — confirmed stages do NOT auto-create. Working pattern: `embeds=ViolationStages,ViolationStages.ViolationStageAction` in URL, include `ViolationStages[{StageNumber,Name:"Door Hanger",StageDate,DueDate,IsCurrentStage:true,IsStageCreated:true,IsCommunicationSent:false,ViolationStageAction:{Action:""}}]` in body.
 - [x] 1.3 Spike: find RM image upload endpoint path and request format — confirmed: `POST Violations/{id}/Image`, multipart/form-data, violation must exist first
 - [x] 1.4 Spike: verify `ConcurrencyID` is required when updating a ViolationStage's IsCommunicationSent — DEFERRED: no REST API endpoint exists for updating IsCommunicationSent. `POST /Violations/{id}/ViolationStages` only allows DueDate and IsActionsComplete updates. `markStagesCommunicated` is non-functional; notify workflow deferred.
 

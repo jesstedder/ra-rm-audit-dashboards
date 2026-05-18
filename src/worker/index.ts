@@ -314,6 +314,7 @@ app.post('/api/violations', async (c) => {
       tenantId: number;
       violationCodeId: number;
       violationDate: string;
+      dueDate: string;
       resolveAction?: string;
       description?: string;
       imageId?: number;
@@ -334,7 +335,8 @@ app.post('/api/violations', async (c) => {
     const items = body.map(v => {
       const unitId = tenantUnitMap.get(v.tenantId);
       if (!unitId) throw new Error(`No active unit found for tenant ${v.tenantId}`);
-      return { tenantId: v.tenantId, unitId, violationCodeId: v.violationCodeId, violationDate: v.violationDate, resolveAction: v.resolveAction, description: v.description, imageId: v.imageId };
+      if (!v.dueDate) throw new Error(`dueDate is required for violation (tenantId ${v.tenantId})`);
+      return { tenantId: v.tenantId, unitId, violationCodeId: v.violationCodeId, violationDate: v.violationDate, dueDate: v.dueDate, resolveAction: v.resolveAction, description: v.description, imageId: v.imageId };
     });
 
     const created = await createViolations(client, config.rm.propertyId, items);

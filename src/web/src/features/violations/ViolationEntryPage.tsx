@@ -280,6 +280,11 @@ export function ViolationEntryPage() {
   const tenantRef = useRef<HTMLDivElement>(null);
 
   const [violationDate, setViolationDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  });
   const [rows, setRows] = useState<ViolationRowData[]>([newRow()]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -347,6 +352,7 @@ export function ViolationEntryPage() {
         tenantId: selectedTenantId!,
         violationCodeId: row.violationCodeId!,
         violationDate: `${violationDate}T00:00:00`,
+        dueDate: `${dueDate}T00:00:00`,
         resolveAction: row.resolveAction || undefined,
         description: row.description || undefined,
       }));
@@ -489,18 +495,32 @@ export function ViolationEntryPage() {
           </div>
         </div>
 
-        {/* Shared violation date */}
-        <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-bark)', fontFamily: 'var(--font-ui)' }}>
-            Violation Date
-          </label>
-          <input
-            type="date"
-            value={violationDate}
-            onChange={e => setViolationDate(e.target.value)}
-            className="rounded border px-3 py-1.5 text-sm"
-            style={inputStyle}
-          />
+        {/* Shared violation date + due date */}
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-bark)', fontFamily: 'var(--font-ui)' }}>
+              Violation Date
+            </label>
+            <input
+              type="date"
+              value={violationDate}
+              onChange={e => setViolationDate(e.target.value)}
+              className="rounded border px-3 py-1.5 text-sm"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-bark)', fontFamily: 'var(--font-ui)' }}>
+              Due Date
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              className="rounded border px-3 py-1.5 text-sm"
+              style={inputStyle}
+            />
+          </div>
         </div>
 
         {/* Violation rows */}

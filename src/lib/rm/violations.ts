@@ -50,6 +50,7 @@ export interface CreateViolationItem {
   unitId: number;
   violationCodeId: number;
   violationDate: string;
+  dueDate: string;
   resolveAction?: string;
   description?: string;
   imageId?: number;
@@ -100,8 +101,18 @@ export async function createViolations(
     ...(item.resolveAction ? { ResolveAction: item.resolveAction } : {}),
     ...(item.description ? { Description: item.description } : {}),
     ...(item.imageId ? { ImageID: item.imageId } : {}),
+    ViolationStages: [{
+      StageNumber: 1,
+      Name: 'Door Hanger',
+      StageDate: item.violationDate,
+      DueDate: item.dueDate,
+      IsCurrentStage: true,
+      IsStageCreated: true,
+      IsCommunicationSent: false,
+      ViolationStageAction: { Action: '' },
+    }],
   }));
-  return client.post<Violation[]>('/Violations', body);
+  return client.post<Violation[]>('/Violations?embeds=ViolationStages,ViolationStages.ViolationStageAction', body);
 }
 
 export async function uploadViolationImage(

@@ -121,7 +121,9 @@ export async function uploadViolationImage(
   imageFile: File,
 ): Promise<ImageModel> {
   const form = new FormData();
-  form.append('file', imageFile);
+  // RM requires: 'item' as plain string JSON (not a Blob), 'FileStream' as the binary
+  form.append('item', JSON.stringify({ ImageTypeID: 7, FileName: imageFile.name }));
+  form.append('FileStream', imageFile, imageFile.name);
   return client.postMultipart<ImageModel>(`/Violations/${violationId}/Image`, form);
 }
 

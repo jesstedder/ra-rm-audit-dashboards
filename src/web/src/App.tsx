@@ -7,8 +7,7 @@ import { ViolationEntryPage } from './features/violations/ViolationEntryPage';
 import { ViolationNotifyPage } from './features/violations/ViolationNotifyPage';
 import { useCurrentUser } from './hooks/useCurrentUser';
 import { RefreshButton } from './components/RefreshButton';
-
-type Page = 'pet-fee-audit' | 'pet-registration-check' | 'analytics' | 'violations-dashboard' | 'violations-new' | 'violations-notify';
+import { useHashNav, type Page } from './hooks/useHashNav';
 
 const navItems: { id: Page; label: string; section: string }[] = [
   { id: 'pet-fee-audit', label: 'Pet Fee Audit', section: 'Audits' },
@@ -19,7 +18,7 @@ const navItems: { id: Page; label: string; section: string }[] = [
 ];
 
 export default function App() {
-  const [page, setPage] = useState<Page>('pet-fee-audit');
+  const { page, navigate } = useHashNav();
   const [notifyTenantId, setNotifyTenantId] = useState<number | null>(null);
   const { user } = useCurrentUser();
   const reloadRef = useRef<(() => void) | null>(null);
@@ -69,7 +68,7 @@ export default function App() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setPage(item.id)}
+                      onClick={() => navigate(item.id)}
                       className="w-full text-left px-3 py-2 rounded text-sm transition-all duration-150"
                       style={{
                         color: isActive ? 'var(--color-sidebar-brand)' : 'var(--color-sidebar-text)',

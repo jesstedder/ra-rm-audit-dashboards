@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useViolations, type TenantViolationGroup, type ViolationStage } from './useViolations.ts';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Skeleton } from '../../components/ui/skeleton.tsx';
+import { HintPopover } from '../../components/HintPopover.tsx';
 import { config } from '../../../../config.js';
 
 const RM_WEB = config.rm.webUrl;
@@ -29,27 +30,8 @@ function SummaryCard({ label, value, warning, hint }: { label: string; value: nu
       }}
     >
       {hint && (
-        <span
-          title={hint}
-          style={{
-            position: 'absolute',
-            top: '7px',
-            right: '8px',
-            width: '14px',
-            height: '14px',
-            borderRadius: '50%',
-            border: '1px solid var(--color-straw)',
-            color: 'var(--color-earth)',
-            fontFamily: 'var(--font-ui)',
-            fontSize: '9px',
-            lineHeight: '13px',
-            textAlign: 'center',
-            cursor: 'help',
-            opacity: 0.55,
-            userSelect: 'none',
-          }}
-        >
-          ?
+        <span style={{ position: 'absolute', top: '7px', right: '8px' }}>
+          <HintPopover hint={hint} />
         </span>
       )}
       <span

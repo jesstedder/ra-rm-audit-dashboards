@@ -6,9 +6,7 @@ import { config } from '../../../../config.js';
 
 const RM_WEB = config.rm.webUrl;
 
-interface Props {
-  onNotify: (tenantId: number) => void;
-}
+type Props = Record<string, never>;
 
 function getCurrentStage(v: { ViolationStages: ViolationStage[] }): ViolationStage | null {
   return v.ViolationStages.find(s => s.IsCurrentStage) ?? v.ViolationStages[0] ?? null;
@@ -19,7 +17,7 @@ function stageBadgeVariant(stageNum: number): 'secondary' | 'pasture' | 'harvest
   return 'secondary';
 }
 
-function SummaryCard({ label, value, warning }: { label: string; value: number; warning?: boolean }) {
+function SummaryCard({ label, value, warning, hint }: { label: string; value: number; warning?: boolean; hint?: string }) {
   return (
     <div
       className="rounded p-4 flex flex-col gap-1"
@@ -27,8 +25,33 @@ function SummaryCard({ label, value, warning }: { label: string; value: number; 
         backgroundColor: warning && value > 0 ? 'var(--color-harvest-bg)' : 'var(--color-ivory)',
         border: `1px solid ${warning && value > 0 ? 'var(--color-harvest-text)' : 'var(--color-straw)'}`,
         minWidth: '130px',
+        position: 'relative',
       }}
     >
+      {hint && (
+        <span
+          title={hint}
+          style={{
+            position: 'absolute',
+            top: '7px',
+            right: '8px',
+            width: '14px',
+            height: '14px',
+            borderRadius: '50%',
+            border: '1px solid var(--color-straw)',
+            color: 'var(--color-earth)',
+            fontFamily: 'var(--font-ui)',
+            fontSize: '9px',
+            lineHeight: '13px',
+            textAlign: 'center',
+            cursor: 'help',
+            opacity: 0.55,
+            userSelect: 'none',
+          }}
+        >
+          ?
+        </span>
+      )}
       <span
         className="text-2xl font-bold"
         style={{
@@ -45,7 +68,7 @@ function SummaryCard({ label, value, warning }: { label: string; value: number; 
   );
 }
 
-export function ViolationDashboardPage({ onNotify }: Props) {
+export function ViolationDashboardPage(_props: Props) {
   const { violations, byTenant, cachedAt, loading, error, reload } = useViolations();
 
   const summary = useMemo(() => {
@@ -135,11 +158,11 @@ export function ViolationDashboardPage({ onNotify }: Props) {
       {/* Summary cards */}
       {summary && (
         <div className="flex flex-wrap gap-3 mb-8">
-          <SummaryCard label="In violation" value={summary.total} />
-          <SummaryCard label="Needs notice" value={summary.needsNotice} />
-          <SummaryCard label="Noticed, pending" value={summary.noticedPending} />
-          <SummaryCard label="Escalated" value={summary.escalated} warning />
-          <SummaryCard label="Flagged for review" value={summary.flagged} warning />
+          <SummaryCard label="In violation" value={summary.total} hint="Total tenants with at least one open violation." />
+          <SummaryCard label="Needs notice" value={summary.needsNotice} hint="Stage 1 violation where the door hanger has not yet been sent." />
+          <SummaryCard label="Noticed, pending" value={summary.noticedPending} hint="Door hanger sent; waiting for the tenant to remedy the violation." />
+          <SummaryCard label="Escalated" value={summary.escalated} warning hint="Has a Stage 2 or higher violation." />
+          <SummaryCard label="Flagged for review" value={summary.flagged} warning hint="Tenant has violations at more than one stage — requires manual review." />
         </div>
       )}
 
@@ -181,7 +204,6 @@ export function ViolationDashboardPage({ onNotify }: Props) {
                   key={group.tenantId}
                   group={group}
                   isLast={idx === sortedGroups.length - 1}
-                  onNotify={onNotify}
                 />
               ))}
             </tbody>
@@ -192,7 +214,7 @@ export function ViolationDashboardPage({ onNotify }: Props) {
   );
 }
 
-function TenantRow({ group, isLast, onNotify }: { group: TenantViolationGroup; isLast: boolean; onNotify: (id: number) => void }) {
+function TenantRow({ group, isLast }: { group: TenantViolationGroup; isLast: boolean }) {
   const currentStages = group.violations
     .map(v => getCurrentStage(v))
     .filter(Boolean) as ViolationStage[];
@@ -263,28 +285,7 @@ function TenantRow({ group, isLast, onNotify }: { group: TenantViolationGroup; i
         {earliestDue}
       </td>
 
-      {/* Actions */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          {hasUnnoticed && (
-            <button
-              onClick={() => onNotify(group.tenantId)}
-              className="text-xs px-3 py-1 rounded"
-              style={{
-                backgroundColor: 'var(--color-bark)',
-                color: 'var(--color-ivory)',
-                fontFamily: 'var(--font-ui)',
-                cursor: 'pointer',
-                border: 'none',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-            >
-              Mark as Notified
-            </button>
-          )}
-        </div>
-      </td>
+      <td className="px-4 py-3" />
     </tr>
   );
 }

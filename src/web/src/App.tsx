@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
-import { PetFeeAuditPage } from './features/audits/PetFeeAuditPage.tsx';
-import { PetRegistrationPage } from './features/petscreening/PetRegistrationPage.tsx';
-import { AnalyticsPage } from './features/analytics/AnalyticsPage.tsx';
-import { ViolationDashboardPage } from './features/violations/ViolationDashboardPage.tsx';
-import { ViolationEntryPage } from './features/violations/ViolationEntryPage.tsx';
-import { ViolationNotifyPage } from './features/violations/ViolationNotifyPage.tsx';
-import { useCurrentUser } from './hooks/useCurrentUser.ts';
-import { RefreshButton } from './components/RefreshButton.tsx';
+import { PetFeeAuditPage } from './features/audits/PetFeeAuditPage';
+import { PetRegistrationPage } from './features/petscreening/PetRegistrationPage';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
+import { ViolationDashboardPage } from './features/violations/ViolationDashboardPage';
+import { ViolationEntryPage } from './features/violations/ViolationEntryPage';
+import { ViolationNotifyPage } from './features/violations/ViolationNotifyPage';
+import { useCurrentUser } from './hooks/useCurrentUser';
+import { RefreshButton } from './components/RefreshButton';
 
 type Page = 'pet-fee-audit' | 'pet-registration-check' | 'analytics' | 'violations-dashboard' | 'violations-new' | 'violations-notify';
 
@@ -121,9 +121,7 @@ export default function App() {
           <PetRegistrationPage onReloadRef={handleReloadRef} />
         )}
         {page === 'analytics' && <AnalyticsPage />}
-        {page === 'violations-dashboard' && (
-          <ViolationDashboardPage onNotify={(tenantId) => { setNotifyTenantId(tenantId); setPage('violations-notify'); }} />
-        )}
+        {page === 'violations-dashboard' && <ViolationDashboardPage />}
         {page === 'violations-new' && <ViolationEntryPage />}
         {page === 'violations-notify' && (
           <ViolationNotifyPage tenantId={notifyTenantId} />

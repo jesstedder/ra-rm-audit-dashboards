@@ -245,7 +245,7 @@ function matchesSearch(row: RegistrationCheckRow, search: string): boolean {
 const ALL_STATUSES_SET = new Set(ALL_STATUSES);
 
 export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => void) => void }) {
-  const { data, cachedAt, loading, error, reload } = usePetRegistration();
+  const { data, cachedAt, psAvailable, loading, error, reload } = usePetRegistration();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<RegistrationStatus>>(new Set(ALL_STATUSES));
   const [unitFilter, setUnitFilter] = useState('');
@@ -357,6 +357,15 @@ export function PetRegistrationPage({ onReloadRef }: { onReloadRef?: (fn: () => 
 
       {!loading && !error && data && (
         <>
+          {!psAvailable && (
+            <div
+              className="rounded-lg p-3 text-sm mb-5"
+              style={{ backgroundColor: '#fef3e8', border: '1px solid #e8c99a', color: '#7a3c10', fontFamily: 'var(--font-ui)' }}
+            >
+              PetScreening is currently unreachable — showing RentManager pet data only. PetScreening columns may be incomplete until it recovers.
+            </div>
+          )}
+
           <StatusLegend />
 
           <FilterPanel

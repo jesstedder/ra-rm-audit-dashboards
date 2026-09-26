@@ -6,6 +6,7 @@ export type { RegistrationCheckRow };
 interface UsePetRegistrationResult {
   data: RegistrationCheckRow[] | null;
   cachedAt: string | null;
+  psAvailable: boolean;
   loading: boolean;
   error: string | null;
   reload: () => void;
@@ -14,6 +15,7 @@ interface UsePetRegistrationResult {
 export function usePetRegistration(): UsePetRegistrationResult {
   const [data, setData] = useState<RegistrationCheckRow[] | null>(null);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [psAvailable, setPsAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -29,12 +31,16 @@ export function usePetRegistration(): UsePetRegistrationResult {
           const body = await res.json().catch(() => null) as { error?: string } | null;
           throw new Error(body?.error ?? `API error ${res.status}`);
         }
-        return res.json() as Promise<{ rows: RegistrationCheckRow[]; cachedAt: string | null }>;
+        return res.json() as Promise<{ rows: RegistrationCheckRow[]; cachedAt: string | null; psAvailable?: boolean }>;
       })
-      .then(({ rows, cachedAt }) => { setData(rows); setCachedAt(cachedAt); })
+      .then(({ rows, cachedAt, psAvailable }) => {
+        setData(rows);
+        setCachedAt(cachedAt);
+        setPsAvailable(psAvailable ?? true);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Unknown error'))
       .finally(() => setLoading(false));
   }, [tick]);
 
-  return { data, cachedAt, loading, error, reload };
+  return { data, cachedAt, psAvailable, loading, error, reload };
 }

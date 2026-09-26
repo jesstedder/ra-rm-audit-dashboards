@@ -11,6 +11,7 @@ const CACHE_TTL = config.cache.ttlSeconds;
 
 export interface AllData {
   psProfiles: PsProfile[];
+  psAvailable: boolean;
   rmPets: Pet[];
   rmUnits: Unit[];
   rmTenants: Tenant[];
@@ -42,13 +43,22 @@ export async function fetchAllData(env: RmEnv & PsEnv): Promise<AllData> {
     getCached<{ pets: Pet[]; units: Unit[]; tenants: Tenant[]; leases: Lease[] }>('rm-data'),
   ]);
 
-  const [psProfiles, rmBundle] = await Promise.all([
-    cachedPs ?? fetchPs(env),
+  // PetScreening being down must never block RentManager-only features — degrade to an
+  // empty pet list instead of failing the whole request.
+  const [psOutcome, rmBundle] = await Promise.all([
+    (cachedPs ? Promise.resolve(cachedPs) : fetchPs(env)).then(
+      (profiles): { profiles: PsProfile[]; available: boolean } => ({ profiles, available: true }),
+      (err: unknown) => {
+        console.error('[fetchAllData] PetScreening fetch failed, continuing with RM data only:', err);
+        return { profiles: [], available: false };
+      },
+    ),
     cachedRm ?? fetchRm(env),
   ]);
 
   return {
-    psProfiles,
+    psProfiles: psOutcome.profiles,
+    psAvailable: psOutcome.available,
     rmPets: rmBundle.pets,
     rmUnits: rmBundle.units,
     rmTenants: rmBundle.tenants,

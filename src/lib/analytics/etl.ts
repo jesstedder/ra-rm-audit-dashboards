@@ -39,23 +39,30 @@ export async function runAnalyticsEtl(env: EtlEnv, db: D1Database): Promise<void
   let rmUnitCount = 0;
   let rmTenantCount = 0;
   let rmPetCount = 0;
+  let psAvailable = true;
 
   try {
-    // Fetch PS and RM data in parallel
-    const [psProfiles, rmClient] = await Promise.all([
-      getAllPsProfiles(env),
-      Promise.resolve(createClient({
-        baseUrl: env.RM_BASEURL,
-        username: env.RM_USERNAME,
-        password: env.RM_PASSWORD,
-        locationId: parseInt(env.RM_LOCATIONID, 10),
-      })),
-    ]);
-    const [units, tenants, leases, pets] = await Promise.all([
-      getAllUnits(rmClient),
-      getAllTenants(rmClient),
-      getAllLeases(rmClient),
-      getAllPets(rmClient),
+    const rmClient = createClient({
+      baseUrl: env.RM_BASEURL,
+      username: env.RM_USERNAME,
+      password: env.RM_PASSWORD,
+      locationId: parseInt(env.RM_LOCATIONID, 10),
+    });
+
+    // A PetScreening outage must not stop the daily RM snapshot — fetch it in parallel
+    // with RM data but degrade to an empty list on failure instead of aborting the ETL.
+    const [psProfiles, [units, tenants, leases, pets]] = await Promise.all([
+      getAllPsProfiles(env).catch((err: unknown) => {
+        psAvailable = false;
+        console.error('[analytics-etl] PetScreening fetch failed, continuing with RM data only:', err);
+        return [];
+      }),
+      Promise.all([
+        getAllUnits(rmClient),
+        getAllTenants(rmClient),
+        getAllLeases(rmClient),
+        getAllPets(rmClient),
+      ]),
     ]);
 
     psProfileCount = psProfiles.length;
@@ -184,13 +191,19 @@ export async function runAnalyticsEtl(env: EtlEnv, db: D1Database): Promise<void
     }
     for (const batch of chunks(rmStmts, CHUNK)) await db.batch(batch);
 
-    // Write success sync_log
+    // Write sync_log — 'partial' when PetScreening was unavailable but RM data still synced
     await db.prepare(`
-      INSERT INTO sync_log (synced_at, snapshot_date, ps_profile_count, rm_unit_count, rm_tenant_count, rm_pet_count, status)
-      VALUES (?,?,?,?,?,?,'ok')
-    `).bind(syncedAt, snapshotDate, psProfileCount, rmUnitCount, rmTenantCount, rmPetCount).run();
+      INSERT INTO sync_log (synced_at, snapshot_date, ps_profile_count, rm_unit_count, rm_tenant_count, rm_pet_count, status, error_message)
+      VALUES (?,?,?,?,?,?,?,?)
+    `).bind(
+      syncedAt, snapshotDate, psProfileCount, rmUnitCount, rmTenantCount, rmPetCount,
+      psAvailable ? 'ok' : 'partial',
+      psAvailable ? null : 'PetScreening fetch failed; synced RM data only',
+    ).run();
 
-    await bustCache('rm-data', 'ps-profiles', 'pet-fee-audit');
+    // Only bust the ps-profiles cache when we actually refreshed it — otherwise we'd
+    // throw away the last known-good PetScreening data for no reason.
+    await bustCache('rm-data', 'pet-fee-audit', ...(psAvailable ? ['ps-profiles'] : []));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[analytics-etl] ETL failed:', err);

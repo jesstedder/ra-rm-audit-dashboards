@@ -249,7 +249,7 @@ app.get('/api/pets/registration-check', async (c) => {
 
     rows.sort((a, b) => a.unitName.localeCompare(b.unitName, undefined, { numeric: true }));
 
-    return c.json({ rows, cachedAt: await getCachedAt('rm-data') });
+    return c.json({ rows, cachedAt: await getCachedAt('rm-data'), psAvailable: data.psAvailable });
   } catch (err) {
     if (err instanceof RMApiError) {
       return c.json({ error: err.message, upstream: err.status }, 502);
